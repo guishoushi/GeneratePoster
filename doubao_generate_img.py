@@ -4,7 +4,6 @@ import requests
 from DrissionPage import ChromiumPage, ChromiumOptions
 import time
 import os
-import tqdm
 import base64
 from datetime import datetime
 
