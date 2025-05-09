@@ -124,7 +124,7 @@ def generate_img(data):
             time.sleep(random.uniform(wait_time, wait_time + 0.1))
         yield f"海报生成中，请耐心等待......"
         # print('定位生成好的图片')
-        img_list = page.eles('xpath://img[@data-testid="in_painting_picture"]', timeout=50)
+        img_list = page.eles('xpath://img[@data-testid="in_painting_picture"]', timeout=30)
         # print('图片列表长度', len(img_list))
         yield '定位生成好的图片'
         headers = {
@@ -181,14 +181,17 @@ def generate_img(data):
         page.ele(f'xpath://*[@id="conversation_{title_id}"]/div[2]').click()
         # print('定位到菜单按钮')
         yield '定位到菜单选项'
+        time.sleep(0.5)
         # 点击删除按钮
         page.ele('xpath://div[@class="semi-popover-content"]/div/ul/li[6]').click()
         # print('点击删除按钮')
         yield '操作删除选项'
+        time.sleep(0.5)
         # 点击确认删除按钮
         page.ele('xpath://*[@id="dialog-0"]/div/div[3]/div/button[2]').click()
         # print('点击确认删除按钮')
         yield '对话删除成功'
+        time.sleep(0.5)
         # 关闭浏览器
         page.quit()
         # print('关闭服务')

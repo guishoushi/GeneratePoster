@@ -1,4 +1,7 @@
 import sys
+
+from aiohttp.client_exceptions import ssl_errors
+
 import resources
 import os
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
@@ -76,7 +79,7 @@ class PosterGeneratorApp(QMainWindow):
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
         QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-        self.setWindowTitle("AI 海报生成器 - version 25.05.08")
+        self.setWindowTitle("AI 海报生成器 - version 25.05.09")
         self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)  # 启用最大化按钮
         self.setWindowIcon(QIcon(":/tb.png"))  # 设置窗口图标
 
@@ -86,6 +89,9 @@ class PosterGeneratorApp(QMainWindow):
 
         # 工作线程
         self.worker_thread = None
+
+        #
+        self.render_md = ''
 
     def adjustWindowSize(self):
         """根据屏幕尺寸和缩放比例自动调整窗口大小"""
@@ -214,13 +220,13 @@ class PosterGeneratorApp(QMainWindow):
         quantities = [2, 4, 6, 8]
         for qty in quantities:
             if qty == 2:
-                tips = "(快速)"
+                tips = "(极速)"
             elif qty == 4:
-                tips = "(推荐)"
+                tips = "(快速)"
             elif qty == 8:
-                tips = "(耗时增加)"
+                tips = "(慢速)"
             else:
-                tips = ""
+                tips = "(标准)"
             radio_btn = QRadioButton(f"{qty}张" + tips)
             radio_btn.setFont(QFont("Microsoft YaHei", int(6 * scale_factor)))
             radio_btn.setProperty("quantity", qty)  # 存储数值属性
@@ -378,6 +384,9 @@ class PosterGeneratorApp(QMainWindow):
         self.generate_plan_btn.setText('海报正在生成...')
         self.generate_poster_btn.setText("海报正在生成...")
 
+        # 清空 render_md 字符串
+        self.render_md = ''
+
         # 创建并启动工作线程
         self.worker_thread = WorkerThread("generate_poster", {"prompt": plan, 'img_num': number_img})
         self.worker_thread.progress.connect(self.log)
@@ -417,7 +426,14 @@ class PosterGeneratorApp(QMainWindow):
 
         prompt = self.thought_input.toPlainText()
         if '</think>\n\n' in prompt:
-            self.plan_input.insertPlainText(text)
+            self.render_md += text
+            self.plan_input.setMarkdown(self.render_md)
+
+            # 获取文本光标并移动到底部
+            cursor = self.plan_input.textCursor()
+            cursor.movePosition(cursor.End)
+            self.plan_input.setTextCursor(cursor)
+
             # 使光标在当前显示区域内可见，方便用户进行输入操作
             self.plan_input.ensureCursorVisible()
         else:
