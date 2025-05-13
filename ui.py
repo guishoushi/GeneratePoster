@@ -455,6 +455,10 @@ class PosterGeneratorApp(QMainWindow):
         """线程安全的日志记录"""
         # 使用 QMetaObject.invokeMethod 确保线程安全
         self.log_output.append(message)
+        # 获取文本光标并移动到底部
+        cursor = self.log_output.textCursor()
+        cursor.movePosition(cursor.End)
+        self.log_output.setTextCursor(cursor)
         self.log_output.ensureCursorVisible()
 
 
