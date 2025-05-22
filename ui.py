@@ -1,7 +1,4 @@
 import sys
-
-from aiohttp.client_exceptions import ssl_errors
-
 import resources
 import os
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
@@ -79,7 +76,7 @@ class PosterGeneratorApp(QMainWindow):
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
         QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-        self.setWindowTitle("AI 海报生成器 - version 25.05.09")
+        self.setWindowTitle("AI 海报生成器 - version 25.05.22")
         self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)  # 启用最大化按钮
         self.setWindowIcon(QIcon(":/tb.png"))  # 设置窗口图标
 
@@ -346,6 +343,9 @@ class PosterGeneratorApp(QMainWindow):
         self.thought_input.clear()
         self.plan_input.clear()
 
+        # 清空 render_md 字符串
+        self.render_md = ''
+
         # 创建并启动工作线程
         # 这里假设WorkerThread类在其他地方定义，并且接受一个字符串参数用于某种任务标识
         keyword_input_text = self.keyword_input.text()
@@ -377,15 +377,12 @@ class PosterGeneratorApp(QMainWindow):
         if not plan:
             self.log(f"[{current_time}]   × 错误: 具体方案不能为空!")
             return
-        plan = f"帮我生成{number_img}张海报：" + plan.replace('军徽', '').replace('领袖', '')
+        plan = f"帮我生成{number_img}张海报：" + plan.replace('军徽', '').replace('领袖', '').replace('军旗','').replace('徽章','')
         # 禁用按钮防止重复点击
         self.generate_plan_btn.setEnabled(False)
         self.generate_poster_btn.setEnabled(False)
         self.generate_plan_btn.setText('海报正在生成...')
         self.generate_poster_btn.setText("海报正在生成...")
-
-        # 清空 render_md 字符串
-        self.render_md = ''
 
         # 创建并启动工作线程
         self.worker_thread = WorkerThread("generate_poster", {"prompt": plan, 'img_num': number_img})

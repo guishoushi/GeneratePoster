@@ -6,6 +6,7 @@ import time
 import os
 import base64
 from datetime import datetime
+from add_logo import add_logo_to_poster
 
 
 def generate_img(data):
@@ -27,6 +28,7 @@ def generate_img(data):
     # 创建一个 Chromium 浏览器页面对象
 
     options = ChromiumOptions()
+    #  设置浏览器路径,注释掉默认使用Chrome浏览器
     options.set_browser_path('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe')
     # 设置为无头模式
     options.headless()
@@ -58,11 +60,10 @@ def generate_img(data):
             login_btn = page.ele('xpath://button[@data-testid="to_login_button"]')
             login_btn.click()
             yield '开始登录账号'
-            qrcode_btn = page.ele(
-                'css:#semi-modal-body > div > div > div > div > div.right-YdHG9L > div.container-K_iJ39 > div')
+            qrcode_btn = page.ele('xpath://div[@class="switcher-y5Irzw"]')
             qrcode_btn.click(by_js=True)
             yield "切换二维码登录方式"
-            qr_img = page.ele('xpath://img[@class="qrcode-bUbkgG"]').attr('src')
+            qr_img = page.ele('xpath://img[@class="qrcode-wtCofi"]').attr('src')
             qr_base64_str = qr_img.split(',')[-1]
             with open("decoded_image.jpg", "wb") as f:
                 f.write(base64.b64decode(qr_base64_str))
@@ -116,7 +117,7 @@ def generate_img(data):
             yield f"海报生成中: [{completed}{remaining}] {progress}%"
             # 在页面中执行JavaScript代码，将指定容器的滚动条滚动到底部。
             page.run_js("""
-                    const container = document.querySelector('div.scrollable-PMdv92');
+                    const container = document.querySelector('div.scrollable-nYx8_v');
                     container.scrollTop = container.scrollHeight;
                 """)
 
@@ -148,29 +149,32 @@ def generate_img(data):
 
             # 创建以当天日期命名的文件夹
             date_folder_path = date_str
-            if not os.path.exists(date_folder_path):
-                os.makedirs(date_folder_path)
 
             # 获取小时信息
             hour_str = local_time.strftime('%H时')
 
             # 创建以小时命名的文件夹
-            hour_folder_path = os.path.join(date_folder_path, hour_str)
+            hour_folder_path = os.path.join("海报图片", date_folder_path, hour_str)
             if not os.path.exists(hour_folder_path):
                 os.makedirs(hour_folder_path)
 
             # 将本地时间格式化为字符串，采用特定格式
             time_str = local_time.strftime('%Y-%m-%d/%H时%M分%S秒.%f')[:-3]
-            # 提取文件名部分
-            file_name = time_str.split('/')[-1] + '.jpg'
-            # 组合完整的文件路径
-            file_path = os.path.join(hour_folder_path, file_name)
-            with open(file_path, 'wb') as f:
+            for name in ['白色logo', '黑色logo']:
+                # 提取文件名部分
+                file_name = time_str.split('时')[-1] + name + '.jpg'
+                # 组合完整的文件路径
+                file_path = os.path.join(hour_folder_path, file_name)
+
+                # 粘贴西点logo
+                yield add_logo_to_poster(response.content, file_path, name, logo_size=0.8)
+                #  打开海报并显示
+                os.startfile(file_path)
+                time.sleep(0.1)
+            img_path = os.path.join(hour_folder_path, time_str.split('时')[-1] + "原图.jpg")
+            with open(img_path, 'wb') as f:
                 f.write(response.content)
-                # print(f"图片已保存到 {file_path}")
-                yield f"图片已保存到 {file_path}"
-            os.startfile(file_path)
-            time.sleep(0.1)
+            os.startfile(img_path)
     except Exception as e:
         yield e
     finally:
@@ -181,17 +185,17 @@ def generate_img(data):
         page.ele(f'xpath://*[@id="conversation_{title_id}"]/div[2]').click()
         # print('定位到菜单按钮')
         yield '定位到菜单选项'
-        time.sleep(0.5)
+        time.sleep(0.3)
         # 点击删除按钮
         page.ele('xpath://div[@class="semi-popover-content"]/div/ul/li[6]').click()
         # print('点击删除按钮')
         yield '操作删除选项'
-        time.sleep(0.5)
+        time.sleep(0.3)
         # 点击确认删除按钮
         page.ele('xpath://*[@id="dialog-0"]/div/div[3]/div/button[2]').click()
         # print('点击确认删除按钮')
         yield '对话删除成功'
-        time.sleep(0.5)
+        time.sleep(0.3)
         # 关闭浏览器
         page.quit()
         # print('关闭服务')

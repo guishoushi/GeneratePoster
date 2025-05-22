@@ -2,5 +2,7 @@
 <RCC version="1.0">
     <qresource>
         <file>tb.png</file>
+        <file>white_logo.png</file>
+        <file>black_logo.png</file>
     </qresource>
 </RCC>
