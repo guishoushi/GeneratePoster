@@ -6,7 +6,6 @@ import time
 import os
 import base64
 from datetime import datetime
-from add_logo import add_logo_to_poster
 
 
 def generate_img(data):
@@ -60,14 +59,15 @@ def generate_img(data):
             login_btn = page.ele('xpath://button[@data-testid="to_login_button"]')
             login_btn.click()
             yield '开始登录账号'
-            qrcode_btn = page.ele('xpath://div[@class="switcher-y5Irzw"]')
+            qrcode_btn = page.ele('xpath://div[@data-testid="qrcode_switcher"]')
             qrcode_btn.click(by_js=True)
             yield "切换二维码登录方式"
-            qr_img = page.ele('xpath://img[@class="qrcode-wtCofi"]').attr('src')
+            qr_img = page.ele('xpath://img[@data-testid="qrcode_image"]').attr('src')
             qr_base64_str = qr_img.split(',')[-1]
             with open("decoded_image.jpg", "wb") as f:
                 f.write(base64.b64decode(qr_base64_str))
             yield '二维码生成完毕！'
+    img_content_list = []
     try:
         # print('定位图像生成按钮')
         yield '定位图像生成标签'
@@ -117,9 +117,35 @@ def generate_img(data):
             yield f"海报生成中: [{completed}{remaining}] {progress}%"
             # 在页面中执行JavaScript代码，将指定容器的滚动条滚动到底部。
             page.run_js("""
-                    const container = document.querySelector('div.scrollable-nYx8_v');
-                    container.scrollTop = container.scrollHeight;
-                """)
+                // 使用元素存在性检查和等待机制
+                function scrollMessageList() {
+                    const container = document.querySelector('[data-testid="message-list"]');
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                        return true; // 成功执行
+                    }
+                    return false; // 元素不存在
+                }
+
+                // 尝试立即执行
+                if (!scrollMessageList()) {
+                    // 等待元素加载
+                    const observer = new MutationObserver(() => {
+                        if (scrollMessageList()) {
+                            observer.disconnect(); // 任务完成，停止监听
+                        }
+                    });
+
+                    // 开始监听整个文档
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+
+                    // 设置超时以防元素永远不加载
+                    setTimeout(() => observer.disconnect(), 5000);
+                }
+            """)
 
             # 增加随机延迟，模拟工作负载
             time.sleep(random.uniform(wait_time, wait_time + 0.1))
@@ -160,21 +186,22 @@ def generate_img(data):
 
             # 将本地时间格式化为字符串，采用特定格式
             time_str = local_time.strftime('%Y-%m-%d/%H时%M分%S秒.%f')[:-3]
-            for name in ['白色logo', '黑色logo']:
-                # 提取文件名部分
-                file_name = time_str.split('时')[-1] + name + '.jpg'
-                # 组合完整的文件路径
-                file_path = os.path.join(hour_folder_path, file_name)
-
-                # 粘贴西点logo
-                yield add_logo_to_poster(response.content, file_path, name, logo_size=0.8)
-                #  打开海报并显示
-                os.startfile(file_path)
-                time.sleep(0.1)
-            img_path = os.path.join(hour_folder_path, time_str.split('时')[-1] + "原图.jpg")
-            with open(img_path, 'wb') as f:
-                f.write(response.content)
-            os.startfile(img_path)
+            # for name in ['白色logo', '黑色logo']:
+            #     # 提取文件名部分
+            #     file_name = time_str.split('时')[-1] + name + '.jpg'
+            #     # 组合完整的文件路径
+            #     file_path = os.path.join(hour_folder_path, file_name)
+            #
+            #     # 粘贴西点logo
+            #     yield add_logo_to_poster(response.content, file_path, name, logo_size=0.8)
+            #     #  打开海报并显示
+            #     os.startfile(file_path)
+            #     time.sleep(0.1)
+            img_path = os.path.join(hour_folder_path, time_str.split('时')[-1] + ".jpg")
+            # with open(img_path, 'wb') as f:
+            #     f.write(response.content)
+            # os.startfile(img_path)
+            img_content_list.append({'path': img_path, 'content': response.content})
     except Exception as e:
         yield e
     finally:
@@ -200,3 +227,5 @@ def generate_img(data):
         page.quit()
         # print('关闭服务')
         yield '服务已关闭！'
+        if img_content_list:
+            yield img_content_list
