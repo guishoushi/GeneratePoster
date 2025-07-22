@@ -83,7 +83,7 @@ class PosterGeneratorApp(QMainWindow):
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
         QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-        self.setWindowTitle("AI 海报生成器 - version 25.06.05")
+        self.setWindowTitle("AI 海报生成器 - version 25.07.22")
         self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)  # 启用最大化按钮
         self.setWindowIcon(QIcon(":/tb.png"))  # 设置窗口图标
 

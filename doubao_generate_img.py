@@ -13,7 +13,7 @@ def generate_img(data):
     yield '开始生成图片中，请稍等...\n'
     # 创建一个临时的ChromiumOptions对象，用于一些初始化配置
     temp_options = ChromiumOptions()
-    temp_options.set_browser_path('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe')
+    # temp_options.set_browser_path('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe')
     # 设置为无头模式，即浏览器在后台运行，不会显示界面，常用于自动化任务中不需要可视化界面的场景
     temp_options.headless()
     # 设置禁止沙盒模式，在某些环境（比如一些Linux环境下）运行时可能需要此配置来避免权限等相关问题
@@ -28,7 +28,7 @@ def generate_img(data):
 
     options = ChromiumOptions()
     #  设置浏览器路径,注释掉默认使用Chrome浏览器
-    options.set_browser_path('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe')
+    # options.set_browser_path('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe')
     # 设置为无头模式
     options.headless()
     # 以下三行是一些可选的配置，这里被注释掉了，具体说明如下：
@@ -51,7 +51,7 @@ def generate_img(data):
     # 开启服务
     page.get('https://www.doubao.com')
     page.set.window.max()
-    login_btn = page.ele('xpath://*[@id="root"]/div[1]/div/div[3]/div[1]/div[1]/div/div/div[2]/div/div/div[2]/div[1]')
+    login_btn = page.ele('xpath://*[@id="root"]/div[1]/div/div[3]/div/main/div/div/div[2]/div[1]/div/div[2]/div[1]')
     if login_btn:
         if "你好，我是豆包" in login_btn.text:
             # print('账号未登录！！！！')
@@ -67,6 +67,14 @@ def generate_img(data):
             with open("decoded_image.jpg", "wb") as f:
                 f.write(base64.b64decode(qr_base64_str))
             yield '二维码生成完毕！'
+            while True:
+                login_btn = page.ele(
+                    'xpath://*[@id="root"]/div[1]/div/div[3]/div/main/div/div/div[2]/div[1]/div/div[2]/div[1]')
+                if '你好，我是豆包' not in login_btn.text:
+                    yield '登录成功！'
+                    break
+                time.sleep(0.1)
+
     img_content_list = []
     try:
         # print('定位图像生成按钮')
@@ -90,6 +98,7 @@ def generate_img(data):
         # 查找搜索按钮并点击
         # print('点击提交按钮')
         yield '开始提交生成任务'
+        # 定位发送按钮，并点击
         search_button = page.ele('css:#flow-end-msg-send')
         search_button.click()
 
@@ -159,7 +168,6 @@ def generate_img(data):
         }
         # print('获取到的img_list: ', img_list)
         for i in img_list:
-
             img_url = i.attr('src')
             # print('获取到图片的src')
             yield '已成功获取到图片的src'
@@ -206,7 +214,8 @@ def generate_img(data):
         yield e
     finally:
         title_id = page.url.split('/')[-1]
-        # print(title_id)
+        while 'local' in title_id:
+            title_id = page.url.split('/')[-1]
         yield title_id
         # 定位到当前对话的菜单选项
         page.ele(f'xpath://*[@id="conversation_{title_id}"]/div[2]').click()
